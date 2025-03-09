@@ -1,0 +1,24 @@
+[package]
+name = "cargo-run-copy"
+version = "0.1.0"
+edition = "2024"
+authors = ["frozenlib <frozenlib@users.noreply.github.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/frozenlib/cargo-run-copy"
+documentation = "https://docs.rs/cargo-run-copy/"
+keywords = ["cargo", "development", "build", "windows"]
+categories = ["development-tools::cargo-plugins", "development-tools"]
+description = "Like cargo run but runs from a copy to avoid file locking"
+include = [
+    "/src/**",
+    "/examples/**",
+    "/tests/**",
+    "/README.md",
+    "/README.*.md",
+    "/LICENSE*",
+]
+
+[dependencies]
+cargo_metadata = "0.19.2"
+anyhow = "1.0.97"
+blake3 = "1.6.1"
