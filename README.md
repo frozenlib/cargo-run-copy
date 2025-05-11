@@ -38,7 +38,7 @@ Use `cargo-run-copy` instead of `cargo run`:
 cargo-run-copy [cargo build options] -- [program arguments]
 ```
 
-### `cargo-run-copy-no-console`
+## `cargo-run-copy-no-console`
 
 When you run `cargo install cargo-run-copy`, the following two binaries will be installed:
 
@@ -53,7 +53,7 @@ On Windows, there are differences in behavior as shown below. (On platforms othe
 |Returns control to the shell immediately when run from a shell|Yes|No|
 |Displays standard output when run from a shell|Yes|No|
 
-#### Use case for `cargo-run-copy-no-console`
+### Use case for `cargo-run-copy-no-console`
 
 When using `cargo-run-copy` in the MCP server settings in Cursor, an unnecessary console window may appear. By using `cargo-run-copy-no-console` instead, you can suppress the display of the console window.
 
