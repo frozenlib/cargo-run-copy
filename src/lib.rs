@@ -24,7 +24,7 @@ pub fn run(connect_console: bool) -> anyhow::Result<()> {
             build_args.push(arg);
         }
     }
-    let exe = build(&build_args)?;
+    let exe = build(&build_args, connect_console)?;
     let target = to_target_dir(&exe)?;
 
     let hash = to_hash(&exe)?;
@@ -39,11 +39,9 @@ pub fn run(connect_console: bool) -> anyhow::Result<()> {
         }
     }
     eprintln!("     Running {}", exe_copied.display());
-    let mut command = Command::new(exe_copied);
-    if !connect_console {
-        no_window(&mut command);
-    }
-    let mut child = command.args(run_args).spawn()?;
+    let mut child = apply_options(&mut Command::new(exe_copied), connect_console)
+        .args(run_args)
+        .spawn()?;
     let output = child.wait()?;
     if let Some(code) = output.code() {
         exit(code);
@@ -52,8 +50,8 @@ pub fn run(connect_console: bool) -> anyhow::Result<()> {
     }
 }
 
-fn build(build_args: &[String]) -> anyhow::Result<PathBuf> {
-    let mut command = no_window(&mut Command::new("cargo"))
+fn build(build_args: &[String], connect_console: bool) -> anyhow::Result<PathBuf> {
+    let mut command = apply_options(&mut Command::new("cargo"), connect_console)
         .args(["build", "--message-format=json-render-diagnostics"])
         .args(build_args)
         .stdout(Stdio::piped())
@@ -87,6 +85,14 @@ fn build(build_args: &[String]) -> anyhow::Result<PathBuf> {
         Ok(executable.into())
     } else {
         bail!("Cargo build failed to produce an executable");
+    }
+}
+
+fn apply_options(command: &mut Command, connect_console: bool) -> &mut Command {
+    if connect_console {
+        command
+    } else {
+        no_window(command)
     }
 }
 
