@@ -1,5 +1,3 @@
-#![windows_subsystem = "windows"]
-
 use std::{
     env,
     fs::File,
@@ -11,7 +9,7 @@ use std::{
 use anyhow::bail;
 use cargo_metadata::Message;
 
-fn main() -> anyhow::Result<()> {
+pub fn run(connect_console: bool) -> anyhow::Result<()> {
     let mut build_args = Vec::new();
     let mut run_args = Vec::new();
     let mut is_run_arg = false;
@@ -41,9 +39,11 @@ fn main() -> anyhow::Result<()> {
         }
     }
     eprintln!("     Running {}", exe_copied.display());
-    let mut child = no_window(&mut Command::new(exe_copied))
-        .args(run_args)
-        .spawn()?;
+    let mut command = Command::new(exe_copied);
+    if !connect_console {
+        no_window(&mut command);
+    }
+    let mut child = command.args(run_args).spawn()?;
     let output = child.wait()?;
     if let Some(code) = output.code() {
         exit(code);
