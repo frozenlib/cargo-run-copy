@@ -20,5 +20,5 @@ include = [
 
 [dependencies]
 cargo_metadata = "0.19.2"
-anyhow = "1.0.97"
-blake3 = "1.6.1"
+anyhow = "1.0.98"
+blake3 = "1.8.2"
