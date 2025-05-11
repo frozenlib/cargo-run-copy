@@ -38,6 +38,25 @@ cargo install cargo-run-copy
 cargo-run-copy [cargo buildのオプション] -- [プログラムの引数]
 ```
 
+### `cargo-run-copy-no-console`
+
+`cargo install cargo-run-copy` 実行すると次の二つのバイナリがインストールされます。
+
+- `cargo-run-copy`
+- `cargo-run-copy-no-console`
+
+Windowsでは下記のような動作の違いがあります。（Windows以外では動作に違いはありません。）
+
+||`cargo-run-copy`|`cargo-run-copy-no-console`|
+|---|---|---|
+|コンソールウィンドウを表示する|Yes|No|
+|シェルから実行したときにすぐに制御を返す|Yes|No|
+|シェルから実行したときに標準出力を表示する|Yes|No|
+
+#### `cargo-run-copy-no-console` のユースケース
+
+Cursorではmcpサーバの設定で `cargo-run-copy` を使用すると不必要なコンソールウィンドウが表示されてしまいますが、代わりに `cargo-run-copy-no-console` を使用することでコンソールウィンドウの表示を抑止することができます。
+
 ## License
 
 This project is dual licensed under Apache-2.0/MIT. See the two LICENSE-\* files for details.
