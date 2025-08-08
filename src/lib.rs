@@ -32,11 +32,11 @@ pub fn run(connect_console: bool) -> anyhow::Result<()> {
         bail!("Couldn't get file name");
     };
     let exe_copied = target.join("run-copy").join(hash).join(file_name);
-    if !exe_copied.exists() {
-        if let Some(parent) = exe_copied.parent() {
-            std::fs::create_dir_all(parent)?;
-            std::fs::copy(&exe, &exe_copied)?;
-        }
+    if !exe_copied.exists()
+        && let Some(parent) = exe_copied.parent()
+    {
+        std::fs::create_dir_all(parent)?;
+        std::fs::copy(&exe, &exe_copied)?;
     }
     eprintln!("     Running {}", exe_copied.display());
     let mut child = apply_options(&mut Command::new(exe_copied), connect_console)
@@ -110,12 +110,11 @@ fn no_window(command: &mut Command) -> &mut Command {
 
 fn to_target_dir(mut path: &Path) -> anyhow::Result<PathBuf> {
     loop {
-        if path.is_dir() {
-            if let Some(file_name) = path.file_name() {
-                if file_name == "target" {
-                    return Ok(path.to_path_buf());
-                }
-            }
+        if path.is_dir()
+            && let Some(file_name) = path.file_name()
+            && file_name == "target"
+        {
+            return Ok(path.to_path_buf());
         }
         if let Some(parent) = path.parent() {
             path = parent;
