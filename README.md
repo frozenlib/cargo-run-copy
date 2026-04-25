@@ -92,7 +92,7 @@ By splitting the workflow into `build` and `run-from`, the server can be restart
 
 1. Run `cargo-run-copy build` from a `watchexec` process that watches source files
 2. Update `--exe-path-file` only when `build` succeeds
-3. Run `cargo-run-copy run-from` from a separate `watchexec --restart` process that watches `--exe-path-file`
+3. Run `cargo-run-copy run-from` from a separate `watchexec --restart` process that watches the directory containing `--exe-path-file`
 
 Example:
 
@@ -101,7 +101,7 @@ watchexec -w src -w Cargo.toml -w Cargo.lock -i target -i .cargo-run-copy --on-b
 ```
 
 ```sh
-watchexec -w .cargo-run-copy/current-exe --restart -- cargo-run-copy run-from --exe-path-file .cargo-run-copy/current-exe -- [program arguments]
+watchexec --no-vcs-ignore -w .cargo-run-copy -f '**/current-exe' --restart -- cargo-run-copy run-from --exe-path-file .cargo-run-copy/current-exe -- [program arguments]
 ```
 
 The file specified by `--exe-path-file` must exist before `run-from` can start. If needed, run `build` once before starting the watchers.
@@ -109,6 +109,8 @@ The file specified by `--exe-path-file` must exist before `run-from` can start. 
 For the source watcher, exclude `target` and the directory containing `--exe-path-file`. Otherwise, copied executables or state file updates may trigger unnecessary rebuilds.
 
 Because `.cargo-run-copy` contains generated state files, it is recommended to add it to `.gitignore`.
+
+For the `run-from` watcher, use `--no-vcs-ignore` when the directory containing `--exe-path-file` is ignored by Git. Watch the directory and filter to the state file instead of watching the file directly, because the state file may be replaced when it is updated.
 
 For the source watcher, `--on-busy-update=queue` is recommended so changes that happen during a build are queued for the next build.
 

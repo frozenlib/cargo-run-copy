@@ -92,7 +92,7 @@ cargo-run-copy run-from --exe-path-file <path> -- [プログラムの引数]
 
 1. ソースコード監視用の `watchexec` で `cargo-run-copy build` を実行する
 2. `build` が成功した場合だけ `--exe-path-file` が更新される
-3. `--exe-path-file` 監視用の `watchexec --restart` で `cargo-run-copy run-from` を実行する
+3. `--exe-path-file` を置くディレクトリを監視する `watchexec --restart` で `cargo-run-copy run-from` を実行する
 
 例：
 
@@ -101,7 +101,7 @@ watchexec -w src -w Cargo.toml -w Cargo.lock -i target -i .cargo-run-copy --on-b
 ```
 
 ```sh
-watchexec -w .cargo-run-copy/current-exe --restart -- cargo-run-copy run-from --exe-path-file .cargo-run-copy/current-exe -- [プログラムの引数]
+watchexec --no-vcs-ignore -w .cargo-run-copy -f '**/current-exe' --restart -- cargo-run-copy run-from --exe-path-file .cargo-run-copy/current-exe -- [プログラムの引数]
 ```
 
 最初に `run-from` するためには、`--exe-path-file` で指定されたファイルが存在している必要があります。必要に応じて、監視を開始する前に一度 `build` を実行してください。
@@ -109,6 +109,8 @@ watchexec -w .cargo-run-copy/current-exe --restart -- cargo-run-copy run-from --
 ソースコード監視側では、`target` や `--exe-path-file` を置くディレクトリを監視対象から除外してください。コピー先や状態ファイルの更新をソース変更として扱うと、不要な再ビルドが発生します。
 
 `.cargo-run-copy` は生成される状態ファイルを置くためのディレクトリなので、`.gitignore` に追加することを推奨します。
+
+`run-from` 監視側では、`--exe-path-file` を置くディレクトリが Git の ignore 対象の場合、`--no-vcs-ignore` を指定してください。また、状態ファイルは更新時に置換されることがあるため、ファイルを直接監視するのではなく、ディレクトリを監視して対象ファイル名で絞り込んでください。
 
 ソースコード監視側では、ビルド中に追加の変更が発生した場合に次のビルドをキューへ積むため、`--on-busy-update=queue` を指定することを推奨します。
 
