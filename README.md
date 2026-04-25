@@ -97,7 +97,7 @@ By splitting the workflow into `build` and `run-from`, the server can be restart
 Example:
 
 ```sh
-watchexec -w src -w Cargo.toml -w Cargo.lock -i target -i .cargo-run-copy --on-busy-update=queue -- cargo-run-copy build --exe-path-file .cargo-run-copy/current-exe -- --manifest-path path/to/Cargo.toml
+watchexec -w src -w Cargo.toml -w Cargo.lock -i target -i .cargo-run-copy --on-busy-update=queue -- cargo-run-copy build --exe-path-file .cargo-run-copy/current-exe -- [cargo build options]
 ```
 
 ```sh
@@ -107,6 +107,8 @@ watchexec -w .cargo-run-copy/current-exe --restart -- cargo-run-copy run-from --
 The file specified by `--exe-path-file` must exist before `run-from` can start. If needed, run `build` once before starting the watchers.
 
 For the source watcher, exclude `target` and the directory containing `--exe-path-file`. Otherwise, copied executables or state file updates may trigger unnecessary rebuilds.
+
+Because `.cargo-run-copy` contains generated state files, it is recommended to add it to `.gitignore`.
 
 For the source watcher, `--on-busy-update=queue` is recommended so changes that happen during a build are queued for the next build.
 
