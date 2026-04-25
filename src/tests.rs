@@ -4,6 +4,16 @@ fn strings(args: &[&str]) -> Vec<String> {
     args.iter().map(|arg| (*arg).to_owned()).collect()
 }
 
+fn temp_dir(name: &str) -> PathBuf {
+    let dir = env::temp_dir().join(format!(
+        "cargo_run_copy_test_{}_{}",
+        std::process::id(),
+        name
+    ));
+    let _ = std::fs::remove_dir_all(&dir);
+    dir
+}
+
 #[test]
 fn parse_legacy_run_command() {
     assert_eq!(
@@ -112,14 +122,62 @@ fn path_relative_from_same_path() {
 
 #[test]
 fn write_and_read_exe_path_file() {
-    let dir = env::temp_dir().join(format!("cargo_run_copy_test_{}", std::process::id()));
-    let _ = std::fs::remove_dir_all(&dir);
+    let dir = temp_dir("write_and_read_exe_path_file");
     let exe_path_file = dir.join("state").join("current-exe");
     let exe = Path::new("target/run-copy/hash/server");
 
     write_exe_path_file(&exe_path_file, exe).unwrap();
 
     assert_eq!(read_exe_path_file(&exe_path_file).unwrap(), exe);
+
+    std::fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
+fn ensure_exe_path_file_exists_creates_empty_file_and_parent_dirs() {
+    let dir = temp_dir("ensure_exe_path_file_exists_creates_empty_file_and_parent_dirs");
+    let exe_path_file = dir.join("state").join("current-exe");
+
+    ensure_exe_path_file_exists(&exe_path_file).unwrap();
+
+    assert_eq!(std::fs::read_to_string(&exe_path_file).unwrap(), "");
+
+    std::fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
+fn ensure_exe_path_file_exists_does_not_truncate_existing_file() {
+    let dir = temp_dir("ensure_exe_path_file_exists_does_not_truncate_existing_file");
+    let exe_path_file = dir.join("state").join("current-exe");
+    std::fs::create_dir_all(exe_path_file.parent().unwrap()).unwrap();
+    std::fs::write(&exe_path_file, "target/run-copy/hash/server\n").unwrap();
+
+    ensure_exe_path_file_exists(&exe_path_file).unwrap();
+
+    assert_eq!(
+        std::fs::read_to_string(&exe_path_file).unwrap(),
+        "target/run-copy/hash/server\n"
+    );
+
+    std::fs::remove_dir_all(dir).unwrap();
+}
+
+#[test]
+fn read_exe_path_file_fails_when_file_is_missing() {
+    let dir = temp_dir("read_exe_path_file_fails_when_file_is_missing");
+    let exe_path_file = dir.join("state").join("current-exe");
+
+    assert!(read_exe_path_file(&exe_path_file).is_err());
+}
+
+#[test]
+fn read_exe_path_file_fails_when_file_is_empty() {
+    let dir = temp_dir("read_exe_path_file_fails_when_file_is_empty");
+    let exe_path_file = dir.join("state").join("current-exe");
+    std::fs::create_dir_all(exe_path_file.parent().unwrap()).unwrap();
+    std::fs::write(&exe_path_file, "").unwrap();
+
+    assert!(read_exe_path_file(&exe_path_file).is_err());
 
     std::fs::remove_dir_all(dir).unwrap();
 }

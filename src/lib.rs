@@ -1,6 +1,6 @@
 use std::{
     env,
-    fs::{File, rename},
+    fs::{File, OpenOptions, rename},
     io::{BufReader, Read, Write},
     path::{Path, PathBuf},
     process::{Command, Stdio, exit},
@@ -73,6 +73,7 @@ pub fn run(connect_console: bool) -> anyhow::Result<()> {
             exe_path_file,
             build_args,
         } => {
+            ensure_exe_path_file_exists(&exe_path_file)?;
             let exe_copied = build_copy(&build_args, connect_console)?;
             write_exe_path_file(&exe_path_file, &to_current_dir_relative(&exe_copied)?)?;
         }
@@ -176,6 +177,23 @@ fn run_executable(exe: &Path, run_args: &[String], connect_console: bool) -> any
     }
 }
 
+fn ensure_exe_path_file_exists(exe_path_file: &Path) -> anyhow::Result<()> {
+    if let Some(parent) = exe_path_file.parent()
+        && !parent.as_os_str().is_empty()
+    {
+        std::fs::create_dir_all(parent)?;
+    }
+
+    OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .open(exe_path_file)
+        .with_context(|| format!("Couldn't create {}", exe_path_file.display()))?;
+
+    Ok(())
+}
+
 fn write_exe_path_file(exe_path_file: &Path, exe: &Path) -> anyhow::Result<()> {
     if let Some(parent) = exe_path_file.parent()
         && !parent.as_os_str().is_empty()
@@ -203,7 +221,8 @@ fn write_exe_path_file(exe_path_file: &Path, exe: &Path) -> anyhow::Result<()> {
 }
 
 fn read_exe_path_file(exe_path_file: &Path) -> anyhow::Result<PathBuf> {
-    let content = std::fs::read_to_string(exe_path_file)?;
+    let content = std::fs::read_to_string(exe_path_file)
+        .with_context(|| format!("Couldn't read {}", exe_path_file.display()))?;
     let exe = content.trim();
     if exe.is_empty() {
         bail!("--exe-path-file is empty");
