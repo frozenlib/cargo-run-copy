@@ -38,6 +38,80 @@ cargo install cargo-run-copy
 cargo-run-copy [cargo buildのオプション] -- [プログラムの引数]
 ```
 
+サブコマンドを明示する場合は、次のように `run` を使用します：
+
+```sh
+cargo-run-copy run [cargo buildのオプション] -- [プログラムの引数]
+```
+
+サブコマンドを省略した場合は、互換性のため `run` と同じ動作になります。
+
+## コマンドリファレンス
+
+### `run`
+
+```sh
+cargo-run-copy run [cargo buildのオプション] -- [プログラムの引数]
+```
+
+`cargo build` を実行し、生成された実行ファイルを `target/run-copy/<ハッシュ値>/` にコピーしてから実行します。
+
+サブコマンドなしの呼び出しは、この `run` と同等です。
+
+```sh
+cargo-run-copy [cargo buildのオプション] -- [プログラムの引数]
+```
+
+### `build`
+
+```sh
+cargo-run-copy build --exe-path-file <path> -- [cargo buildのオプション]
+```
+
+`cargo build` を実行し、生成された実行ファイルを `target/run-copy/<ハッシュ値>/` にコピーします。その後、コピーした実行ファイルの相対パスを `--exe-path-file` で指定されたファイルに書き込みます。
+
+`--exe-path-file` は必須です。書き込まれるパスは、`cargo-run-copy` を実行したカレントディレクトリ基準の相対パスです。
+
+ビルドに失敗した場合、`--exe-path-file` で指定されたファイルは更新されません。
+
+### `run-from`
+
+```sh
+cargo-run-copy run-from --exe-path-file <path> -- [プログラムの引数]
+```
+
+`--exe-path-file` で指定されたファイルからコピー済み実行ファイルの相対パスを読み取り、その実行ファイルを指定された引数で実行します。
+
+`--exe-path-file` は必須です。ファイル内の相対パスは、`cargo-run-copy` を実行したカレントディレクトリ基準で解決されます。
+
+## watchexec と併用する
+
+`watchexec --restart` で通常の `cargo-run-copy run` を実行すると、変更検知時に先にサーバが停止し、その後にビルドが始まります。ビルド時間が長い場合、その間サーバが停止したままになります。
+
+`build` と `run-from` を分けることで、ビルドが成功してからサーバを再起動できます。
+
+1. ソースコード監視用の `watchexec` で `cargo-run-copy build` を実行する
+2. `build` が成功した場合だけ `--exe-path-file` が更新される
+3. `--exe-path-file` 監視用の `watchexec --restart` で `cargo-run-copy run-from` を実行する
+
+例：
+
+```sh
+watchexec -w src -w Cargo.toml -w Cargo.lock -i target -i .cargo-run-copy --on-busy-update=queue -- cargo-run-copy build --exe-path-file .cargo-run-copy/current-exe -- --manifest-path path/to/Cargo.toml
+```
+
+```sh
+watchexec -w .cargo-run-copy/current-exe --restart -- cargo-run-copy run-from --exe-path-file .cargo-run-copy/current-exe -- [プログラムの引数]
+```
+
+最初に `run-from` するためには、`--exe-path-file` で指定されたファイルが存在している必要があります。必要に応じて、監視を開始する前に一度 `build` を実行してください。
+
+ソースコード監視側では、`target` や `--exe-path-file` を置くディレクトリを監視対象から除外してください。コピー先や状態ファイルの更新をソース変更として扱うと、不要な再ビルドが発生します。
+
+ソースコード監視側では、ビルド中に追加の変更が発生した場合に次のビルドをキューへ積むため、`--on-busy-update=queue` を指定することを推奨します。
+
+2 つの `watchexec` は同じカレントディレクトリで起動してください。`--exe-path-file` に書き込まれる実行ファイルパスは、カレントディレクトリ基準の相対パスとして扱われます。
+
 ## `cargo-run-copy-no-console`
 
 `cargo install cargo-run-copy` 実行すると次の二つのバイナリがインストールされます。

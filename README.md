@@ -38,6 +38,80 @@ Use `cargo-run-copy` instead of `cargo run`:
 cargo-run-copy [cargo build options] -- [program arguments]
 ```
 
+When explicitly using a subcommand, use `run`:
+
+```sh
+cargo-run-copy run [cargo build options] -- [program arguments]
+```
+
+For compatibility, omitting the subcommand is equivalent to `run`.
+
+## Command Reference
+
+### `run`
+
+```sh
+cargo-run-copy run [cargo build options] -- [program arguments]
+```
+
+Runs `cargo build`, copies the generated executable to `target/run-copy/<hash>/`, and then runs the copied executable.
+
+Calling `cargo-run-copy` without a subcommand is equivalent to this `run` command.
+
+```sh
+cargo-run-copy [cargo build options] -- [program arguments]
+```
+
+### `build`
+
+```sh
+cargo-run-copy build --exe-path-file <path> -- [cargo build options]
+```
+
+Runs `cargo build` and copies the generated executable to `target/run-copy/<hash>/`. It then writes the relative path of the copied executable to the file specified by `--exe-path-file`.
+
+`--exe-path-file` is required. The written path is relative to the current directory where `cargo-run-copy` was executed.
+
+If the build fails, the file specified by `--exe-path-file` is not updated.
+
+### `run-from`
+
+```sh
+cargo-run-copy run-from --exe-path-file <path> -- [program arguments]
+```
+
+Reads the relative path of a copied executable from the file specified by `--exe-path-file`, then runs that executable with the specified arguments.
+
+`--exe-path-file` is required. The relative path in the file is resolved from the current directory where `cargo-run-copy` was executed.
+
+## Using with watchexec
+
+When `watchexec --restart` runs the normal `cargo-run-copy run` command, the server is stopped first and the build starts afterward. If the build takes a long time, the server stays stopped during that time.
+
+By splitting the workflow into `build` and `run-from`, the server can be restarted only after a successful build.
+
+1. Run `cargo-run-copy build` from a `watchexec` process that watches source files
+2. Update `--exe-path-file` only when `build` succeeds
+3. Run `cargo-run-copy run-from` from a separate `watchexec --restart` process that watches `--exe-path-file`
+
+Example:
+
+```sh
+watchexec -w src -w Cargo.toml -w Cargo.lock -i target -i .cargo-run-copy --on-busy-update=queue -- cargo-run-copy build --exe-path-file .cargo-run-copy/current-exe -- --manifest-path path/to/Cargo.toml
+```
+
+```sh
+watchexec -w .cargo-run-copy/current-exe --restart -- cargo-run-copy run-from --exe-path-file .cargo-run-copy/current-exe -- [program arguments]
+```
+
+The file specified by `--exe-path-file` must exist before `run-from` can start. If needed, run `build` once before starting the watchers.
+
+For the source watcher, exclude `target` and the directory containing `--exe-path-file`. Otherwise, copied executables or state file updates may trigger unnecessary rebuilds.
+
+For the source watcher, `--on-busy-update=queue` is recommended so changes that happen during a build are queued for the next build.
+
+Start both `watchexec` processes from the same current directory. The executable path written to `--exe-path-file` is treated as relative to the current directory.
+
 ## `cargo-run-copy-no-console`
 
 When you run `cargo install cargo-run-copy`, the following two binaries will be installed:

@@ -22,3 +22,4 @@ include = [
 cargo_metadata = "0.19.2"
 anyhow = "1.0.98"
 blake3 = "1.8.2"
+clap = { version = "4.6.1", features = ["derive"] }
