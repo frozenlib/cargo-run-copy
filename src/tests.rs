@@ -42,13 +42,13 @@ fn parse_build_command() {
         parse_args(strings(&[
             "build",
             "--exe-path-file",
-            ".cargo-run-copy/current-exe",
+            "target/run-copy-path/current-exe",
             "--",
             "--release"
         ]))
         .unwrap(),
         CliCommand::Build {
-            exe_path_file: ".cargo-run-copy/current-exe".into(),
+            exe_path_file: "target/run-copy-path/current-exe".into(),
             build_args: strings(&["--release"])
         }
     );
@@ -59,13 +59,13 @@ fn parse_build_command_with_equals_option() {
     assert_eq!(
         parse_args(strings(&[
             "build",
-            "--exe-path-file=.cargo-run-copy/current-exe",
+            "--exe-path-file=target/run-copy-path/current-exe",
             "--",
             "--release"
         ]))
         .unwrap(),
         CliCommand::Build {
-            exe_path_file: ".cargo-run-copy/current-exe".into(),
+            exe_path_file: "target/run-copy-path/current-exe".into(),
             build_args: strings(&["--release"])
         }
     );
@@ -77,13 +77,13 @@ fn parse_run_from_command() {
         parse_args(strings(&[
             "run-from",
             "--exe-path-file",
-            ".cargo-run-copy/current-exe",
+            "target/run-copy-path/current-exe",
             "--",
             "server-arg"
         ]))
         .unwrap(),
         CliCommand::RunFrom {
-            exe_path_file: ".cargo-run-copy/current-exe".into(),
+            exe_path_file: "target/run-copy-path/current-exe".into(),
             run_args: strings(&["server-arg"])
         }
     );
